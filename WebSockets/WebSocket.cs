@@ -297,7 +297,7 @@ namespace System.Net.WebSockets
             StopReceiving();
             _webSocketSender.StopSender();
 
-            Debug.WriteLine($"Connection - {RemoteEndPoint.ToString()} - Closed");
+            Debug.WriteLine($"Connection - {RemoteEndPoint} - Closed");
          
             ConnectionClosed?.Invoke(this, new EventArgs());
 
@@ -307,7 +307,7 @@ namespace System.Net.WebSockets
                 _socket.SetSocketOption(SocketOptionLevel.Socket, SocketOptionName.Linger, 1);
                 _socket.Close();
             }
-            catch (ObjectDisposedException e)
+            catch (ObjectDisposedException)
             {
                 Debug.WriteLine("socket could not be closed properly because it was already disposed");
             }
