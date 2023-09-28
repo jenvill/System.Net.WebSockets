@@ -3,6 +3,8 @@
 // See LICENSE file in the project root for full license information.
 //
 
+using Microsoft.Extensions.Logging;
+using nanoFramework.Logging;
 using System.Collections;
 using System.Diagnostics;
 using System.IO;
@@ -27,8 +29,8 @@ namespace System.Net.WebSockets
     public class ClientWebSocket : WebSocket, IDisposable
     {
         private NetworkStream _networkStream;
-
         private X509Certificate _certificate = null;
+        private readonly ILogger _logger;
 
         /// <summary>
         /// If a secure connection is used.
@@ -107,6 +109,7 @@ namespace System.Net.WebSockets
                 SslVerification = options.SslVerification;
                 _certificate = options.Certificate;
             }
+            _logger = LogDispatcher.LoggerFactory.CreateLogger(nameof(ClientWebSocket));
         }
 
         /// <summary>
@@ -116,7 +119,7 @@ namespace System.Net.WebSockets
         /// <param name="headers">Optional <see cref="ClientWebSocketHeaders"/> for setting custom headers.</param>
         public void Connect(string uri, ClientWebSocketHeaders headers = null)
         {
-            State = WebSocketFrame.WebSocketState.Connecting;
+            State = WebSocketState.Connecting;
 
             var splitUrl = uri.Split(new char[] { ':', '/', '/' }, 4);
 
@@ -203,8 +206,8 @@ namespace System.Net.WebSockets
             catch (SocketException ex)
             {
                 _tcpSocket.Close();
-                State = WebSocketFrame.WebSocketState.Closed;
-                Debug.WriteLine($"** Socket exception occurred: {ex.Message} error code {ex.ErrorCode}!**");
+                State = WebSocketState.Closed;
+                _logger.LogError($"** Socket exception occurred: {ex.Message} error code {ex.ErrorCode}!**");
             }
 
             ConnectionClosed += WebSocket_ConnectionClosed;
@@ -258,7 +261,7 @@ namespace System.Net.WebSockets
 
                     if (((string)headers["connection"]).ToLower() == "upgrade" && ((string)headers["upgrade"]).ToLower() == "websocket" && (string)headers["sec-websocket-accept"] == swkaSha1Base64)
                     {
-                        Debug.WriteLine("WebSocket Client connected");
+                        _logger.LogInformation($"WebSocket Client connected to {remoteEndPoint.Address.ToString()}");
                         correctHandshake = true;
                     }
                 }

@@ -45,6 +45,11 @@ namespace System.Net.WebSockets
                     Debug.WriteLine("timeout");
                     return null;
                 }
+                else if (ex.ErrorCode == 10056)
+                {
+                    Debug.WriteLine("Socket is already connected.");
+                    return null;
+                }
                 else
                 {
                     var errorReturnFrame = new ReceiveMessageFrame() { EndPoint = _remoteEndPoint };
@@ -53,7 +58,7 @@ namespace System.Net.WebSockets
                 }
             }
         }
-        
+
         private ReceiveMessageFrame DecodeHeader(byte[] header) //TODO: put everything a ReceiveMessageFrame creator... Factory style?
         {
             ReceiveMessageFrame messageFrame = new ReceiveMessageFrame() { EndPoint = _remoteEndPoint };
@@ -71,18 +76,18 @@ namespace System.Net.WebSockets
             }
 
             //single frame message
-            if (fin && messageFrame.OpCode != OpCode.ContinuationFrame) 
+            if (fin && messageFrame.OpCode != OpCode.ContinuationFrame)
             {
                 messageFrame.Fragmentation = FragmentationType.NotFragmented;
 
                 //controller messages can be sent between fragmented messages
-                if (_receivingFragmentedMessage && !messageFrame.IsControllFrame) 
+                if (_receivingFragmentedMessage && !messageFrame.IsControllFrame)
                 {
                     return SetMessageError(messageFrame, "Already receiving another fragmented message", WebSocketCloseStatus.PolicyViolation);
                 }
             }
             //fin 0 and opcode !=0 -> begin fragmented message
-            else if (messageFrame.OpCode != OpCode.ContinuationFrame && !fin) 
+            else if (messageFrame.OpCode != OpCode.ContinuationFrame && !fin)
             {
                 messageFrame.Fragmentation = FragmentationType.FirstFragment;
 
@@ -94,7 +99,7 @@ namespace System.Net.WebSockets
                 _receivingFragmentedMessage = true;
             }
             // fin 0 and opcode 0 -> in between frame of fragmented message
-            else if (messageFrame.OpCode == OpCode.ContinuationFrame && !fin) 
+            else if (messageFrame.OpCode == OpCode.ContinuationFrame && !fin)
             {
                 messageFrame.Fragmentation = FragmentationType.Fragment;
 
@@ -104,7 +109,7 @@ namespace System.Net.WebSockets
                 }
             }
             //fin 1 and opcode 0 -> last of fragmented message
-            else if (messageFrame.OpCode == OpCode.ContinuationFrame && fin) 
+            else if (messageFrame.OpCode == OpCode.ContinuationFrame && fin)
             {
                 messageFrame.Fragmentation = FragmentationType.FinalFragment;
 
@@ -125,7 +130,7 @@ namespace System.Net.WebSockets
             messageFrame.IsMasked = (header[1] & 0b10000000) != 0;
 
             // & 0111 1111
-            messageFrame.MessageLength = header[1] % 128; 
+            messageFrame.MessageLength = header[1] % 128;
 
             if (messageFrame.MessageLength == 126)
             {
@@ -203,9 +208,9 @@ namespace System.Net.WebSockets
                 size -= bytes;
             }
 
-            if(masks != null)
+            if (masks != null)
             {
-                for(int i = 0; i < buffer.Length; i++)
+                for (int i = 0; i < buffer.Length; i++)
                 {
                     buffer[i] = (byte)(buffer[i] ^ masks[i % masks.Length]);
                 }
