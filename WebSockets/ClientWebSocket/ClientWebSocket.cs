@@ -101,7 +101,8 @@ namespace System.Net.WebSockets
         /// Creates an instance of the WebSocketClient class.
         /// </summary>
         /// <param name="options">Optional <see cref="ClientWebSocketOptions"/> where extra options can be defined.</param>
-        public ClientWebSocket(ClientWebSocketOptions options = null) : base(options)
+        /// <param name="logger"></param>
+        public ClientWebSocket(ClientWebSocketOptions options = null, ILogger logger = null) : base(options)
         {
             if (options != null)
             {
@@ -109,7 +110,7 @@ namespace System.Net.WebSockets
                 SslVerification = options.SslVerification;
                 _certificate = options.Certificate;
             }
-            _logger = LogDispatcher.LoggerFactory.CreateLogger(nameof(ClientWebSocket));
+            _logger = logger ?? LogDispatcher.LoggerFactory.CreateLogger(nameof(ClientWebSocket));
         }
 
         /// <summary>
