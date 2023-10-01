@@ -262,7 +262,7 @@ namespace System.Net.WebSockets
 
                     if (((string)headers["connection"]).ToLower() == "upgrade" && ((string)headers["upgrade"]).ToLower() == "websocket" && (string)headers["sec-websocket-accept"] == swkaSha1Base64)
                     {
-                        _logger.LogInformation($"WebSocket Client connected to {remoteEndPoint.Address.ToString()}");
+                        _logger.LogInformation($"WebSocket Client connected to {remoteEndPoint.Address}");
                         correctHandshake = true;
                     }
                 }
@@ -270,7 +270,7 @@ namespace System.Net.WebSockets
 
             if (!correctHandshake)
             {
-                State = WebSocketFrame.WebSocketState.Closed;
+                State = WebSocketState.Closed;
                 _tcpSocket.Close();
 
                 throw new Exception("WebSocket did not receive right handshake");
