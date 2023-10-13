@@ -17,6 +17,7 @@ namespace System.Net.WebSockets
         internal OpCode OpCode { get; set; }
         internal bool IsControllFrame { get => (int)OpCode > 7; }
         internal bool Error { get => ErrorMessage != null; }
+        internal bool HardCloseOnError { get; set; } = false;
         internal string ErrorMessage { get; set; } = null;
 
         /// <summary>

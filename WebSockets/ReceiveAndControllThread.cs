@@ -21,8 +21,8 @@ namespace System.Net.WebSockets
 
         public void WorkerThread() //this thread is always running and thus the best place for controlling ping and other messages
         {
-            var timeoutCheckerTimer = new Timer(CheckTimeouts, Thread.CurrentThread, 5000, 5000); 
-            
+            var timeoutCheckerTimer = new Timer(CheckTimeouts, Thread.CurrentThread, 5000, 5000);
+
 
             while (!_webSocket.Stopped)
             {
@@ -41,7 +41,8 @@ namespace System.Net.WebSockets
 
                         Debug.WriteLine($"{_webSocket.RemoteEndPoint} closed with error: {messageFrame.ErrorMessage}");
 
-                        _webSocket.RawClose(messageFrame.CloseStatus, Encoding.UTF8.GetBytes(messageFrame.ErrorMessage), true);
+                        if (messageFrame.HardCloseOnError) _webSocket.HardClose();
+                        else _webSocket.RawClose(messageFrame.CloseStatus, Encoding.UTF8.GetBytes(messageFrame.ErrorMessage), true);
                     }
                     else if (messageFrame.IsControllFrame)
                     {
@@ -53,16 +54,16 @@ namespace System.Net.WebSockets
                         {
                             case OpCode.PingFrame:
                                 // need to send a Pong
-                                var pong = new SendMessageFrame() { Buffer = buffer, OpCode = OpCode.PongFrame};
+                                var pong = new SendMessageFrame() { Buffer = buffer, OpCode = OpCode.PongFrame };
                                 messageFrame.OpCode = OpCode.PongFrame;
                                 messageFrame.IsMasked = false;
                                 _webSocket.QueueMessageToSend(pong);
                                 break;
 
-                            case OpCode.PongFrame: 
+                            case OpCode.PongFrame:
                                 // received a Pong
                                 // checking if content Pong matches Ping is not implemented due to thread safety and memory consumption considerations
-                                _webSocket.Pinging = false; 
+                                _webSocket.Pinging = false;
                                 break;
 
                             case OpCode.ConnectionCloseFrame:
@@ -72,7 +73,7 @@ namespace System.Net.WebSockets
                                 {
                                     byte[] closeByteCode = new byte[] { buffer[1], buffer[0] };
                                     UInt16 statusCode = BitConverter.ToUInt16(closeByteCode, 0);
-                                    if (statusCode > 999 && statusCode < 1012) 
+                                    if (statusCode > 999 && statusCode < 1012)
                                     {
                                         _webSocket.CloseStatus = (WebSocketCloseStatus)statusCode;
                                     }
@@ -88,7 +89,7 @@ namespace System.Net.WebSockets
                                 //response to connection close we can shut down the socket.
                                 else
                                 {
-                                    _webSocket.HardClose();   
+                                    _webSocket.HardClose();
                                 }
                                 break;
                         }
@@ -112,7 +113,7 @@ namespace System.Net.WebSockets
                     }
                 }
 
-                
+
             }
 
             _webSocket.ReceiveStream.Close();

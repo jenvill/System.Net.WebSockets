@@ -47,8 +47,12 @@ namespace System.Net.WebSockets
                 }
                 else if (ex.ErrorCode == 10056)
                 {
-                    Debug.WriteLine("Socket is already connected.");
-                    return null;
+                    return new ReceiveMessageFrame
+                    {
+                        EndPoint = _remoteEndPoint,
+                        ErrorMessage = "Socket is already connected.",
+                        HardCloseOnError = true
+                    };
                 }
                 else
                 {
